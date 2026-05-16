@@ -24,8 +24,17 @@ def train_lstm():
     
     folds = sorted([f for f in os.listdir(splits_dir) if f.startswith('fold_')])
     
-    # LSTM picks features
+    # Load features
     feature_cols = ['TP2', 'TP3', 'Motor_current', 'Oil_temperature', 'DV_pressure']
+    
+    # Try reading from ETL selection first (Dynamic Selection Phase)
+    etl_features_path = os.path.join(base_data_dir, "2_etl", "selected_features.json")
+    if os.path.exists(etl_features_path):
+        with open(etl_features_path, "r") as f:
+            feature_meta = json.load(f)
+            feature_cols = feature_meta["selected_features"]
+    elif "FEATURE_COLS" in os.environ:
+        feature_cols = os.environ["FEATURE_COLS"].split(",")
     target_col = 'target'
     seq_length = 5
     epochs = 20

@@ -37,6 +37,7 @@ def main():
     # 4. Run scripts
     scripts = [
         "src/etl/process_and_split.py",
+        "src/etl/feature_selection.py",
         "src/train/baseline/train.py",
         "src/train/xgboost/train.py",
         "src/train/lstm/train.py",

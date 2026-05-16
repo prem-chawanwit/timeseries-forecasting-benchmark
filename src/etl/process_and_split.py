@@ -60,7 +60,7 @@ def process_and_split():
     }
 
     # ตั้งค่าตัวแปรเพื่อควบคุมขนาด N (จำนวนบรรทัด) ภายใน Fold อย่างละเอียด
-    n_splits = 30
+    n_splits = 10
     # test_size_in_fold: จำนวน N สำหรับชุด Validation ของทุกๆ Fold
     # max_train_size: จำกัดให้ Train มี N มากสุดเท่าใด (ถ้าอยากให้ Train มีขนาดเท่ากันทุก Fold) 
     # (สามารถใส่ max_train_size=None ถ้าอยากให้ Train ขยายขนาดใหญ่ขึ้นเรื่อยๆ ตามลำดับเวลา)
@@ -91,27 +91,38 @@ def process_and_split():
     print("ETL and Splitting complete!")
 
 def plot_distribution(df, save_dir):
-    plt.figure(figsize=(12, 5))
+    import seaborn as sns
+    # Set seaborn style for better aesthetics
+    sns.set_theme(style="whitegrid")
     
-    # Plot 1: Target Histogram
+    # 1. Distribution Plot
+    plt.figure(figsize=(14, 5))
     plt.subplot(1, 2, 1)
-    plt.hist(df['target'], bins=50, color='skyblue', edgecolor='black')
+    sns.histplot(data=df, x='target', kde=True, color='skyblue', edgecolor='black', bins=50)
     plt.title(f"Target (TP2) Distribution (N={len(df)})")
     plt.xlabel("TP2 Value")
     plt.ylabel("Frequency")
     
-    # Plot 2: Time Series overview
     plt.subplot(1, 2, 2)
-    plt.plot(df.index, df['target'], color='salmon', linewidth=1)
-    plt.title("Target (TP2) over Time")
+    sns.boxplot(data=df, y='target', color='salmon')
+    plt.title("Target (TP2) Boxplot (Outliers)")
+    plt.ylabel("TP2 Value")
+    plt.tight_layout()
+    plt.savefig(os.path.join(save_dir, "data_distribution.png"), dpi=300)
+    plt.close()
+    
+    # 2. Time Series Plot (Raw Overview)
+    plt.figure(figsize=(15, 5))
+    plt.plot(df.index, df['target'], color='teal', linewidth=1)
+    plt.title("Target (TP2) Over Time (Processed Raw)")
     plt.xlabel("Time")
     plt.ylabel("TP2 Value")
     plt.xticks(rotation=45)
-    
     plt.tight_layout()
-    plot_path = os.path.join(save_dir, "data_distribution.png")
-    plt.savefig(plot_path, dpi=300)
-    print(f"Saved distribution plot to {plot_path}")
+    plt.savefig(os.path.join(save_dir, "raw_timeseries.png"), dpi=300)
+    plt.close()
+    
+    print(f"Saved distribution and timeseries plots to {save_dir}")
 
 if __name__ == "__main__":
     process_and_split()

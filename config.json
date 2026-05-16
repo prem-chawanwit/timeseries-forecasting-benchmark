@@ -1,0 +1,30 @@
+{
+    "dataset": {
+        "raw_data_path": "data/1_raw/metropt-3-dataset/MetroPT3(AirCompressor).csv",
+        "time_column": "timestamp",
+        "resample_freq": "1h"
+    },
+    "forecasting": {
+        "target_source_column": "TP2",
+        "target_shift_steps": -1,
+        "target_column_name": "target",
+        "exclude_features": ["TP2", "Unnamed: 0"],
+        "top_k_features": 5
+    },
+    "validation": {
+        "global_test_size_ratio": 0.15,
+        "n_splits": 10
+    },
+    "model_params": {
+        "lstm": {
+            "seq_length": 5,
+            "epochs": 20,
+            "learning_rate": 0.01
+        },
+        "xgboost": {
+            "n_estimators": 100,
+            "max_depth": 5,
+            "learning_rate": 0.1
+        }
+    }
+}
