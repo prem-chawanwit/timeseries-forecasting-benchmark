@@ -18,6 +18,10 @@ def main():
     # 2. Setup environment variable so train/test scripts know where to save
     os.environ["EXPERIMENT_DIR"] = exp_dir
     
+    import shutil
+    if os.path.exists("config.json"):
+        shutil.copy("config.json", os.path.join(exp_dir, "config_used.json"))
+    
     print(f"==================================================")
     print(f"Starting Experiment: {run_name}")
     print(f"Results will be saved to: {exp_dir}")

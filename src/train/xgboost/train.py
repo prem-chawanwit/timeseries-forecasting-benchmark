@@ -32,7 +32,13 @@ def train_xgboost():
             feature_cols = feature_meta["selected_features"]
     elif "FEATURE_COLS" in os.environ:
         feature_cols = os.environ["FEATURE_COLS"].split(",")
-    target_col = 'target'
+    # Load config
+    config_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..", "config.json"))
+    with open(config_path, "r") as f:
+        config = json.load(f)
+        
+    target_col = config["forecasting"]["target_column_name"]
+    xgb_params = config["model_params"]["xgboost"]
     
     val_metrics = {}
     test_metrics = {}
@@ -49,7 +55,7 @@ def train_xgboost():
         X_train, y_train = prepare_tabular_data(train_df, feature_cols, target_col)
         X_val, y_val = prepare_tabular_data(val_df, feature_cols, target_col)
         
-        model = XGBoostModel()
+        model = XGBoostModel(**xgb_params)
         model.fit(X_train, y_train)
         
         # Validation Eval

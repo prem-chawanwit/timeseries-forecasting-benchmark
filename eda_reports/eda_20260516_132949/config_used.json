@@ -18,18 +18,8 @@
     "feature_engineering": {
         "add_time_features": true,
         "lag_features": {
-            "columns": [
-                "IRRADIATION",
-                "MODULE_TEMPERATURE",
-                "AC_POWER"
-            ],
-            "lags": [
-                1,
-                23,
-                24,
-                25,
-                48
-            ]
+            "columns": ["IRRADIATION", "MODULE_TEMPERATURE", "AC_POWER"],
+            "lags": [1, 23, 24, 25, 48]
         }
     },
     "validation": {
@@ -39,7 +29,7 @@
     "model_params": {
         "lstm": {
             "seq_length": 5,
-            "epochs": 1000,
+            "epochs": 20,
             "learning_rate": 0.01
         },
         "xgboost": {

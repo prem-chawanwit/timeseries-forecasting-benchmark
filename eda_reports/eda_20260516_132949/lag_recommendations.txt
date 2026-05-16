@@ -1,0 +1,10 @@
+EDA Run: eda_20260516_132949
+
+1. Recommended Self-Lags for [AC_POWER]:
+Top 5 Lags with highest correlation: [1, 23, 24, 25, 48]
+
+2. Cross-Correlation Analysis (0 to 48 lags):
+ - [DAILY_YIELD]: Best correlation at Lag 18 (Corr = 0.74)
+ - [AMBIENT_TEMPERATURE]: Best correlation at Lag 22 (Corr = 0.84)
+ - [MODULE_TEMPERATURE]: Best correlation at Lag 0 (Corr = 0.97)
+ - [IRRADIATION]: Best correlation at Lag 0 (Corr = 1.00)

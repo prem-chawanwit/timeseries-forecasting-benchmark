@@ -105,6 +105,47 @@ def perform_statistical_testing(save_dir, models):
     df_stats.to_csv(stats_csv_path, index=False)
     print(f"\nSaved statistical tests to {stats_csv_path}")
     print("Note: Since N=3 (3 Folds), the statistical power is low. P-values might be high unless differences are massive.")
+    
+    # Generate Plot for Statistical Tests
+    if not df_stats.empty:
+        plt.figure(figsize=(10, 6))
+        pairs_label = df_stats["Model A"] + " vs " + df_stats["Model B"]
+        p_values = df_stats["Two-Tail P-Value"]
+        
+        # Colors: Green if significant, Gray otherwise
+        colors = ['#2ca02c' if p < 0.05 else '#7f7f7f' for p in p_values]
+        bars = plt.bar(pairs_label, p_values, color=colors, alpha=0.7)
+        
+        plt.axhline(y=0.05, color='red', linestyle='--', label='Significance Threshold (p=0.05)')
+        
+        for bar, p, winner in zip(bars, p_values, df_stats["Winner (One-Tail)"]):
+            height = bar.get_height()
+            # If height is too small, lift the text a bit so it's readable
+            y_pos = max(height, 0.02) 
+            plt.text(bar.get_x() + bar.get_width()/2., y_pos,
+                     f'p={p:.4e}\nWinner: {winner}',
+                     ha='center', va='bottom', fontsize=9)
+                     
+        plt.title('Statistical Significance Test (Two-Tail P-Value)\nBars below red line = Significant Difference')
+        plt.ylabel('P-Value (Log Scale for visibility)')
+        plt.yscale('log') # Use log scale because p-values can be extremely small (e.g., 1e-9)
+        plt.axhline(y=0.05, color='red', linestyle='--')
+        
+        # Fixing legend and layout
+        from matplotlib.patches import Patch
+        legend_elements = [
+            Patch(facecolor='#2ca02c', alpha=0.7, label='Significant (p < 0.05)'),
+            Patch(facecolor='#7f7f7f', alpha=0.7, label='Not Significant (p >= 0.05)'),
+            plt.Line2D([0], [0], color='red', linestyle='--', label='Threshold (0.05)')
+        ]
+        plt.legend(handles=legend_elements)
+        plt.grid(axis='y', alpha=0.3)
+        plt.tight_layout()
+        
+        stat_plot_path = os.path.join(save_dir, "statistical_significance.png")
+        plt.savefig(stat_plot_path, dpi=300)
+        plt.close()
+        print(f"Saved statistical plot to {stat_plot_path}")
 
 def plot_benchmark(df, save_dir):
     # Set up the plot
@@ -113,29 +154,41 @@ def plot_benchmark(df, save_dir):
     x = np.arange(len(df["Model"]))
     width = 0.35
     
-    # Create bar plots for MSE and MAE
+    # Create bar plots for MSE on primary axis
     rects1 = ax1.bar(x - width/2, df["Average MSE"], width, label='MSE', color='skyblue')
-    rects2 = ax1.bar(x + width/2, df["Average MAE"], width, label='MAE', color='salmon')
+    ax1.set_ylabel('Mean Squared Error (MSE)', color='skyblue')
+    ax1.tick_params(axis='y', labelcolor='skyblue')
+    
+    # Create secondary axis for MAE
+    ax2 = ax1.twinx()
+    rects2 = ax2.bar(x + width/2, df["Average MAE"], width, label='MAE', color='salmon')
+    ax2.set_ylabel('Mean Absolute Error (MAE)', color='salmon')
+    ax2.tick_params(axis='y', labelcolor='salmon')
     
     # Add some text for labels, title and custom x-axis tick labels, etc.
-    ax1.set_ylabel('Error Value')
     ax1.set_title('Forecasting Benchmark: Model Comparison on Global Test Set')
     ax1.set_xticks(x)
     ax1.set_xticklabels(df["Model"])
-    ax1.legend()
     
     # Add value labels on top of the bars
-    def autolabel(rects):
+    def autolabel(rects, ax):
         for rect in rects:
             height = rect.get_height()
-            ax1.annotate(f'{height:.4f}',
+            # formatting: if very large, use sci notation, else normal float
+            label = f'{height:.2e}' if height > 10000 else f'{height:.2f}'
+            ax.annotate(label,
                         xy=(rect.get_x() + rect.get_width() / 2, height),
                         xytext=(0, 3),  # 3 points vertical offset
                         textcoords="offset points",
                         ha='center', va='bottom', fontsize=9)
 
-    autolabel(rects1)
-    autolabel(rects2)
+    autolabel(rects1, ax1)
+    autolabel(rects2, ax2)
+    
+    # Combine legends
+    lines1, labels1 = ax1.get_legend_handles_labels()
+    lines2, labels2 = ax2.get_legend_handles_labels()
+    ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper right')
     
     fig.tight_layout()
     
@@ -150,12 +203,19 @@ def plot_time_series(save_dir, num_points=200):
     
     test_df = pd.read_csv(os.path.join(splits_dir, "test.csv"))
     
-    true_values = test_df['target'].values
+    # Load config
+    config_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../..", "config.json"))
+    with open(config_path, "r") as f:
+        config = json.load(f)
+    target_col = config["forecasting"]["target_column_name"]
+    source_col = config["forecasting"]["target_source_column"]
+    
+    true_values = test_df[target_col].values
     
     plt.figure(figsize=(14, 6))
     
     # Plot True Values (first num_points)
-    plt.plot(true_values[:num_points], label='True Target (TP2)', color='black', linewidth=2, linestyle='--')
+    plt.plot(true_values[:num_points], label=f'True Target ({source_col})', color='black', linewidth=2, linestyle='--')
     
     colors = {'baseline': 'blue', 'xgboost': 'green', 'lstm': 'red'}
     
@@ -178,7 +238,7 @@ def plot_time_series(save_dir, num_points=200):
 
     plt.title(f'Time Series Forecast Comparison (First {num_points} points of Test Set)')
     plt.xlabel('Time Step')
-    plt.ylabel('TP2 Target Value')
+    plt.ylabel(f'{source_col} Target Value')
     plt.legend()
     plt.grid(True, alpha=0.3)
     plt.tight_layout()

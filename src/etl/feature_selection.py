@@ -24,11 +24,19 @@ def run_feature_selection():
         print(f"Error: {train_path} not found.")
         return
         
+    # Load config
+    config_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../..", "config.json"))
+    with open(config_path, "r") as f:
+        config = json.load(f)
+        
     df_train = pd.read_csv(train_path)
     
-    # Exclude timestamp, target, and TP2 (to prevent naive shift/copying)
-    target_col = 'target'
-    all_features = [col for col in df_train.columns if col not in ['timestamp', target_col, 'TP2']]
+    # Exclude timestamp and specific features (to prevent naive shift/copying)
+    target_col = config["forecasting"]["target_column_name"]
+    time_col = config["dataset"]["time_column"]
+    exclude_list = config["forecasting"]["exclude_features"] + [time_col, target_col]
+    
+    all_features = [col for col in df_train.columns if col not in exclude_list]
     
     X_train, y_train = prepare_tabular_data(df_train, all_features, target_col)
     
@@ -43,8 +51,8 @@ def run_feature_selection():
     sorted_features = [all_features[i] for i in sorted_idx]
     sorted_importances = [float(importances[i]) for i in sorted_idx]
     
-    # Select Top 5 Features automatically
-    top_k = 5
+    # Select Top K Features automatically
+    top_k = config["forecasting"]["top_k_features"]
     selected_features = sorted_features[:top_k]
     print(f"Selected Top {top_k} Features: {selected_features}")
     

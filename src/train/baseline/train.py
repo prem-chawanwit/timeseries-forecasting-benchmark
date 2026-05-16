@@ -32,7 +32,12 @@ def train_baseline():
             feature_cols = feature_meta["selected_features"]
     elif "FEATURE_COLS" in os.environ:
         feature_cols = os.environ["FEATURE_COLS"].split(",")
-    target_col = 'target'
+    # Load config
+    config_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..", "config.json"))
+    with open(config_path, "r") as f:
+        config = json.load(f)
+        
+    target_col = config["forecasting"]["target_column_name"]
     
     val_metrics = {}
     test_metrics = {}

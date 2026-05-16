@@ -6,10 +6,15 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import TimeSeriesSplit
 
 def process_and_split():
+    # Load config
+    config_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../..", "config.json"))
+    with open(config_path, "r") as f:
+        config = json.load(f)
+        
     print("Loading raw data...")
-    raw_path = "data/1_raw/metropt-3-dataset/MetroPT3(AirCompressor).csv"
+    raw_path = config["dataset"]["raw_data_path"]
     if not os.path.exists(raw_path):
-        print(f"Error: {raw_path} not found. Please run download_dataset.py first.")
+        print(f"Error: {raw_path} not found. Please download dataset.")
         return
 
     # Check if running within an experiment
@@ -21,15 +26,52 @@ def process_and_split():
         df.drop(columns=['Unnamed: 0'], inplace=True)
     
     print("Processing data (ETL)...")
-    df['timestamp'] = pd.to_datetime(df['timestamp'])
-    df.set_index('timestamp', inplace=True)
+    time_col = config["dataset"]["time_column"]
+    df[time_col] = pd.to_datetime(df[time_col])
+    df.set_index(time_col, inplace=True)
     df.sort_index(inplace=True)
     
-    # Resample to 1H
-    df_resampled = df.resample('1h').mean(numeric_only=True).ffill().dropna()
+    # Resample
+    resample_freq = config["dataset"]["resample_freq"]
+    df_resampled = df.resample(resample_freq).mean(numeric_only=True).ffill().dropna()
+    
+    # -------------------------------------------------------------------
+    # Feature Engineering Phase
+    # -------------------------------------------------------------------
+    feat_config = config.get("feature_engineering", {})
+    
+    # 1. Add Time Features
+    if feat_config.get("add_time_features", False):
+        print("Adding Time Features (Hour, DayOfWeek, Month)...")
+        df_resampled['hour'] = df_resampled.index.hour
+        df_resampled['dayofweek'] = df_resampled.index.dayofweek
+        df_resampled['month'] = df_resampled.index.month
+        # Add Sin/Cos transforms for cyclic nature of time
+        df_resampled['hour_sin'] = np.sin(2 * np.pi * df_resampled['hour'] / 24)
+        df_resampled['hour_cos'] = np.cos(2 * np.pi * df_resampled['hour'] / 24)
+        
+    # 2. Add Lag Features
+    lag_config = feat_config.get("lag_features", {})
+    lag_cols = lag_config.get("columns", [])
+    lags = lag_config.get("lags", [])
+    if lag_cols and lags:
+        print(f"Adding Lag Features for {lag_cols} at lags {lags}...")
+        for col in lag_cols:
+            if col in df_resampled.columns:
+                for lag in lags:
+                    df_resampled[f'{col}_lag_{lag}'] = df_resampled[col].shift(lag)
+                    
+    # Drop rows with NaNs caused by lagging
+    if lag_cols and lags:
+        df_resampled.dropna(inplace=True)
+    # -------------------------------------------------------------------
     
     # Create target
-    df_resampled['target'] = df_resampled['TP2'].shift(-1)
+    source_col = config["forecasting"]["target_source_column"]
+    shift_steps = config["forecasting"]["target_shift_steps"]
+    target_col = config["forecasting"]["target_column_name"]
+    
+    df_resampled[target_col] = df_resampled[source_col].shift(shift_steps)
     df_resampled.dropna(inplace=True)
     
     processed_dir = os.path.join(base_data_dir, "2_etl")
@@ -42,7 +84,8 @@ def process_and_split():
     plot_distribution(df_resampled, processed_dir)
 
     print("Splitting into Train, Val, Test...")
-    test_size = int(len(df_resampled) * 0.15)
+    test_size_ratio = config["validation"]["global_test_size_ratio"]
+    test_size = int(len(df_resampled) * test_size_ratio)
     train_val_df = df_resampled.iloc[:-test_size]
     test_df = df_resampled.iloc[-test_size:]
     
@@ -60,7 +103,7 @@ def process_and_split():
     }
 
     # ตั้งค่าตัวแปรเพื่อควบคุมขนาด N (จำนวนบรรทัด) ภายใน Fold อย่างละเอียด
-    n_splits = 10
+    n_splits = config["validation"]["n_splits"]
     # test_size_in_fold: จำนวน N สำหรับชุด Validation ของทุกๆ Fold
     # max_train_size: จำกัดให้ Train มี N มากสุดเท่าใด (ถ้าอยากให้ Train มีขนาดเท่ากันทุก Fold) 
     # (สามารถใส่ max_train_size=None ถ้าอยากให้ Train ขยายขนาดใหญ่ขึ้นเรื่อยๆ ตามลำดับเวลา)
@@ -90,7 +133,7 @@ def process_and_split():
         
     print("ETL and Splitting complete!")
 
-def plot_distribution(df, save_dir):
+def plot_distribution(df, save_dir, target_col='target'):
     import seaborn as sns
     # Set seaborn style for better aesthetics
     sns.set_theme(style="whitegrid")
@@ -98,25 +141,25 @@ def plot_distribution(df, save_dir):
     # 1. Distribution Plot
     plt.figure(figsize=(14, 5))
     plt.subplot(1, 2, 1)
-    sns.histplot(data=df, x='target', kde=True, color='skyblue', edgecolor='black', bins=50)
-    plt.title(f"Target (TP2) Distribution (N={len(df)})")
-    plt.xlabel("TP2 Value")
+    sns.histplot(data=df, x=target_col, kde=True, color='skyblue', edgecolor='black', bins=50)
+    plt.title(f"Target ({target_col}) Distribution (N={len(df)})")
+    plt.xlabel(f"{target_col} Value")
     plt.ylabel("Frequency")
     
     plt.subplot(1, 2, 2)
-    sns.boxplot(data=df, y='target', color='salmon')
-    plt.title("Target (TP2) Boxplot (Outliers)")
-    plt.ylabel("TP2 Value")
+    sns.boxplot(data=df, y=target_col, color='salmon')
+    plt.title(f"Target ({target_col}) Boxplot (Outliers)")
+    plt.ylabel(f"{target_col} Value")
     plt.tight_layout()
     plt.savefig(os.path.join(save_dir, "data_distribution.png"), dpi=300)
     plt.close()
     
     # 2. Time Series Plot (Raw Overview)
     plt.figure(figsize=(15, 5))
-    plt.plot(df.index, df['target'], color='teal', linewidth=1)
-    plt.title("Target (TP2) Over Time (Processed Raw)")
+    plt.plot(df.index, df[target_col], color='teal', linewidth=1)
+    plt.title(f"Target ({target_col}) Over Time (Processed Raw)")
     plt.xlabel("Time")
-    plt.ylabel("TP2 Value")
+    plt.ylabel(f"{target_col} Value")
     plt.xticks(rotation=45)
     plt.tight_layout()
     plt.savefig(os.path.join(save_dir, "raw_timeseries.png"), dpi=300)
