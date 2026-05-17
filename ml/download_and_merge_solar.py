@@ -11,7 +11,8 @@ def prepare_solar_data():
     df_gen = kagglehub.load_dataset(
         KaggleDatasetAdapter.PANDAS,
         "anikannal/solar-power-generation-data",
-        "Plant_1_Generation_Data.csv"
+        "Plant_1_Generation_Data.csv", 
+        pandas_kwargs={"encoding": "latin1"}
     )
     print(f"Generation Data Shape: {df_gen.shape}")
 
@@ -20,7 +21,8 @@ def prepare_solar_data():
     df_weather = kagglehub.load_dataset(
         KaggleDatasetAdapter.PANDAS,
         "anikannal/solar-power-generation-data",
-        "Plant_1_Weather_Sensor_Data.csv"
+        "Plant_1_Weather_Sensor_Data.csv", 
+        pandas_kwargs={"encoding": "latin1"}
     )
     print(f"Weather Data Shape: {df_weather.shape}")
 

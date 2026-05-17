@@ -3,6 +3,10 @@ import subprocess
 import datetime
 import json
 import argparse
+import sys
+# Add the project root to sys.path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__)))
+sys.path.append(project_root)
 
 def main():
     parser = argparse.ArgumentParser(description="Run the forecasting benchmark pipeline")
@@ -19,8 +23,8 @@ def main():
     os.environ["EXPERIMENT_DIR"] = exp_dir
     
     import shutil
-    if os.path.exists("config.json"):
-        shutil.copy("config.json", os.path.join(exp_dir, "config_used.json"))
+    if os.path.exists("ml/config.json"):
+        shutil.copy("ml/config.json", os.path.join(exp_dir, "config_used.json"))
     
     print(f"==================================================")
     print(f"Starting Experiment: {run_name}")
@@ -40,12 +44,12 @@ def main():
         
     # 4. Run scripts
     scripts = [
-        "src/etl/process_and_split.py",
-        "src/etl/feature_selection.py",
-        "src/train/baseline/train.py",
-        "src/train/xgboost/train.py",
-        "src/train/lstm/train.py",
-        "src/test/evaluate.py"
+        "ml/src/etl/process_and_split.py",
+        "ml/src/etl/feature_selection.py",
+        "ml/src/train/baseline/train.py",
+        "ml/src/train/xgboost/train.py",
+        "ml/src/train/lstm/train.py",
+        "ml/src/test/evaluate.py"
     ]
     
     for script in scripts:

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML Experiment Dashboard</title>
+    <meta name="description" content="Dashboard for managing ML time series forecasting experiments">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo-icon">⚡</div>
+            <h1 class="logo-text">ML Dashboard</h1>
+        </div>
+        <ul class="nav-links">
+            <li><a href="#" class="nav-link active" data-page="config" id="nav-config">
+                <span class="nav-icon">⚙️</span><span>Config Editor</span></a></li>
+            <li><a href="#" class="nav-link" data-page="experiments" id="nav-experiments">
+                <span class="nav-icon">📊</span><span>Experiments</span></a></li>
+        </ul>
+        <div class="sidebar-footer">
+            <button class="run-btn" id="btn-run-experiment" title="Run Experiment">
+                <span class="run-icon">🚀</span> Run Experiment
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content" id="main-content">
+        <!-- Config Editor Page -->
+        <section class="page active" id="page-config">
+            <div class="page-header">
+                <h2>Hyperparameter Configuration</h2>
+                <p class="subtitle">Edit config.json parameters for next experiment run</p>
+            </div>
+            <div class="config-actions">
+                <button class="btn btn-secondary" id="btn-reset-config">↻ Reset</button>
+                <button class="btn btn-primary" id="btn-save-config">💾 Save Config</button>
+            </div>
+            <div class="config-grid" id="config-form">
+                <!-- Dynamically populated -->
+            </div>
+        </section>
+
+        <!-- Experiments Page -->
+        <section class="page" id="page-experiments">
+            <div class="page-header">
+                <h2>Experiment Results</h2>
+                <p class="subtitle">Browse and compare experiment runs</p>
+            </div>
+            <!-- Run Selector -->
+            <div class="run-selector" id="run-selector">
+                <!-- Dynamically populated -->
+            </div>
+            <!-- Experiment Detail -->
+            <div class="experiment-detail" id="experiment-detail" style="display:none;">
+                <!-- Overview Section -->
+                <div class="detail-section" id="section-overview"></div>
+                <!-- Model Tabs -->
+                <div class="model-tabs" id="model-tabs">
+                    <div class="tabs-header" id="tabs-header"></div>
+                    <div class="tabs-content" id="tabs-content"></div>
+                </div>
+                <!-- Images Section -->
+                <div class="detail-section" id="section-images"></div>
+                <!-- ETL Section -->
+                <div class="detail-section" id="section-etl"></div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Run Experiment Modal -->
+    <div class="modal-overlay" id="modal-overlay" style="display:none;">
+        <div class="modal glass-card">
+            <div class="modal-header">
+                <h3>🚀 Run Experiment</h3>
+                <button class="modal-close" id="modal-close">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="run-status" id="run-status-area">
+                    <p>Click "Start" to begin a new experiment with current config.</p>
+                </div>
+                <pre class="run-output" id="run-output" style="display:none;"></pre>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="btn-start-run">▶ Start</button>
+                <button class="btn btn-secondary" id="btn-close-modal">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
