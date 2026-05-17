@@ -1,0 +1,14 @@
+EDA Run: eda_20260517_162600
+
+1. Recommended Self-Lags for [TP2]:
+Top 5 Lags with highest correlation: [1, 2, 3, 4, 5]
+
+2. Cross-Correlation Analysis (0 to 48 lags):
+ - [H1]: Best correlation at Lag 0 (Corr = -0.87)
+ - [DV_pressure]: Best correlation at Lag 0 (Corr = 0.73)
+ - [Oil_temperature]: Best correlation at Lag 0 (Corr = 0.44)
+ - [Motor_current]: Best correlation at Lag 0 (Corr = 0.88)
+ - [COMP]: Best correlation at Lag 0 (Corr = -0.86)
+ - [DV_eletric]: Best correlation at Lag 0 (Corr = 0.83)
+ - [Towers]: Best correlation at Lag 0 (Corr = -0.76)
+ - [MPG]: Best correlation at Lag 0 (Corr = -0.83)

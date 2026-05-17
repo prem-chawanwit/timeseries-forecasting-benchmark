@@ -56,7 +56,7 @@ def train_xgboost():
         X_val, y_val = prepare_tabular_data(val_df, feature_cols, target_col)
         
         model = XGBoostModel(**xgb_params)
-        model.fit(X_train, y_train)
+        model.fit(X_train, y_train, eval_set=[(X_val, y_val)])
         
         # Validation Eval
         val_preds = model.predict(X_val)

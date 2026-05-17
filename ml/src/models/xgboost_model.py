@@ -11,8 +11,12 @@ class XGBoostModel:
         params.update(kwargs)
         self.model = xgb.XGBRegressor(**params)
         
-    def fit(self, X, y):
-        self.model.fit(X, y)
+    def fit(self, X, y, eval_set=None):
+        if eval_set:
+            self.model.set_params(early_stopping_rounds=20)
+            self.model.fit(X, y, eval_set=eval_set, verbose=False)
+        else:
+            self.model.fit(X, y)
         
     def predict(self, X):
         return self.model.predict(X)
